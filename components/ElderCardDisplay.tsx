@@ -4,7 +4,7 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import Typography from '@material-ui/core/Typography';
-import { blueGrey } from '@material-ui/core/colors';
+// import { blueGrey } from '@material-ui/core/colors';
 
 interface Props {
     imageUrl?: string;
@@ -16,11 +16,16 @@ interface Props {
 
 const useStyles = makeStyles({
     root: {
-
+        minHeight: 64,
+        minWidth: 64,
     },
     media: {
-        height: 128,
-        backgroundColor: blueGrey[100],
+        borderRadius: 24,
+        minHeight: 256,
+        padding: 8,
+        minWidth: 256,
+        objectFit: "contain"
+        // backgroundColor: blueGrey[100],
         // paddingTop: '56.25%', // 16:9
     },
     title: {
@@ -34,12 +39,12 @@ const useStyles = makeStyles({
     },
 });
 
-const ElderCardDisplay: React.FC<Props> = ({ name, setName, text, type }) => {
+const ElderCardDisplay: React.FC<Props> = ({ name, setName, text, type, imageUrl }) => {
     const classes = useStyles();
     return (
         <Card className={classes.root}>
             <CardContent>
-                <CardMedia className={classes.media} />
+                <CardMedia component="img" className={classes.media} image={imageUrl} />
                 <Typography variant="h5" gutterBottom>
                     {name}
                 </Typography>

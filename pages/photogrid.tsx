@@ -1,20 +1,22 @@
 import React from 'react';
+import axios from 'axios';
 import clsx from 'clsx';
 import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import SearchIcon from '@material-ui/icons/Search';
 import ElderCardDisplay from '../components/ElderCardDisplay';
+import { ElderCards } from '../interfaces/elderCard';
 
 interface Props {
     initialQuery?: ParsedUrlQuery;
-    userAgent?: string;
+    json?: object;
+    cards?: ElderCards;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -35,22 +37,44 @@ const useStyles = makeStyles((theme: Theme) =>
             marginTop: theme.spacing(3),
         },
         textField: {
-            width: '25ch',
+            width: "100%",
         },
     }),
 );
 
-const generateGridItem = ({ name, setName, text, type }: {
+const generateGridItems = (cards?: ElderCards) => {
+    if (cards && cards.cards.length > 0) {
+        return cards.cards.map((card, index) => {
+            return generateGridItem({
+                name: card.name,
+                setName: card.set.name,
+                text: card.text,
+                type: card.type,
+                imageUrl: card.imageUrl,
+                index
+            });
+        });
+    }
+}
+
+const generateGridItem = ({ name, setName, text, type, imageUrl, index }: {
     name: string;
+    imageUrl: string;
     setName: string;
     text: string;
     type: string;
+    index: number;
 }) => {
-    return <ElderCardDisplay
-        name={name}
-        setName={setName}
-        text={text}
-        type={type} />
+    return (
+        <Grid item xs={12} sm={6} md={4} key={index}>
+            <ElderCardDisplay
+                name={name}
+                setName={setName}
+                imageUrl={imageUrl}
+                text={text}
+                type={type} />
+        </Grid>
+    );
 }
 
 const PhotoGrid: NextPage<Props> = (props) => {
@@ -58,7 +82,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const classes = useStyles();
     console.log(`Router Query ${JSON.stringify(router.query)}`);
     console.log(`Page context query ${JSON.stringify(props.initialQuery)}`);
-    console.log(props.userAgent);
+    console.log(`cards returned from server: ${JSON.stringify(props.cards)}`);
 
     return (
         <Container maxWidth="md" className={classes.root}>
@@ -71,44 +95,27 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 }}
             />
             <Grid container spacing={3}>
-                <Grid item xs={6} sm={3}>
-                    {generateGridItem(
-                        {
-                            name: 'foo',
-                            setName: 'fooSet',
-                            text: 'fooText',
-                            type: 'fooType'
-                        })
-                    }
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                    <Paper className={classes.paper}>xs=6 sm=3</Paper>
-                </Grid>
+                {generateGridItems(props.cards)}
             </Grid>
         </Container>
     );
 }
 
 PhotoGrid.getInitialProps = async (ctx) => {
-    const userAgent = ctx.req ? ctx.req.headers['user-agent'] : navigator.userAgent
+    const response = await axios.get('https://api.elderscrollslegends.io/v1/cards', {
+        params: {
+            pageSize: 20,
+        }
+    });
+
+    let cards;
+    if (response.status === 200) {
+        cards = response.data;
+    }
     return {
         initialQuery: ctx.query,
-        userAgent
+        json: response.data,
+        cards,
     }
 }
 

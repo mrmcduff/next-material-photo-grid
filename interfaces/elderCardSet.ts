@@ -1,5 +1,5 @@
 
-export default interface ElderCardSet {
+export interface ElderCardSet {
     id: string;
     name: string;
     _self: string;

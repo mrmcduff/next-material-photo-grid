@@ -1,6 +1,10 @@
-import ElderCardSet from './elderCardSet';
+import { ElderCardSet } from './elderCardSet';
 
-export default interface ElderCard {
+export interface ElderCards {
+    cards: ElderCard[];
+}
+
+export interface ElderCard {
     name: string;
     rarity: string;
     type: string;
