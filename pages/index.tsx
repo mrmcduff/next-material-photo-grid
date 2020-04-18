@@ -11,6 +11,8 @@ const IndexPage = () => {
                 <Link href="/about">
                     About
                 </Link>
+                {' | '}
+                <Link href="/photogrid">Photos</Link>
             </Box>
         </Container>
     );
