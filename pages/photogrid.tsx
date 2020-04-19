@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
 import axios from 'axios';
 import clsx from 'clsx';
 import { useRouter } from 'next/router';
@@ -16,9 +16,11 @@ import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
 import { getQuerySearchAsStringValue } from '../utils/queryAsString';
+import cardReducer, { generateInitialState } from '../utils/cardReducer';
 
 interface Props {
     cards?: ElderCard[];
+    totalCount: number;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -60,6 +62,8 @@ const generateGridItems = (cards?: ElderCard[]): React.ReactNode => {
                 index
             });
         });
+    } else {
+        return null;
     }
 }
 
@@ -99,17 +103,19 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const initialSearch = getQuerySearchAsStringValue(router.query);
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
-    const [contents, setContents] = useState<React.ReactNode>(null);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
+    const [ state, dispatch ] = useReducer(cardReducer, generateInitialState());
 
     useEffect(() => {
         if (isServerSearched.current) {
             isServerSearched.current = false;
-            setContents(generateGridItems(props.cards));
+            if (props.cards) {
+                dispatch({ type: 'append', payload: { cards: props.cards, totalCount: props.totalCount } })
+            }
             return;
         }
-        console.log('FIRING')
+        dispatch({ type: 'clear' });
         setLoading(true);
         axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
             params: {
@@ -120,7 +126,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
             setLoading(false);
             console.log(response.data);
             console.log(response.data._totalCount);
-            setContents(generateGridItems(response.data.cards));
+            dispatch({ type: 'append', payload: { cards: response.data.cards, totalCount: response.data._totalCount } })
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
@@ -149,7 +155,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <Grid container spacing={3}>
-                {contents}
+                {generateGridItems(state.cards)}
             </Grid>
         </Container>
     );
@@ -157,7 +163,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
 PhotoGrid.getInitialProps = async (ctx) => {
     const search = getQuerySearchAsStringValue(ctx.query);
-    const response = await axios.get<{ cards: ElderCard[] }>(API, {
+    const response = await axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
         params: {
             pageSize: 20,
             name: search,
@@ -165,11 +171,14 @@ PhotoGrid.getInitialProps = async (ctx) => {
     });
 
     let cards;
+    let totalCount = 0;
     if (response.status === 200) {
         cards = response.data.cards;
+        totalCount = response.data._totalCount;
     }
     return {
         cards,
+        totalCount,
     }
 }
 
