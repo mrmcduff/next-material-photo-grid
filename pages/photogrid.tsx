@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import clsx from 'clsx';
 import { useRouter } from 'next/router';
 import { NextPage } from 'next';
-// import { ParsedUrlQuery } from 'querystring';
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Backdrop from '@material-ui/core/Backdrop'
@@ -16,11 +15,10 @@ import ElderCardDisplay from '../components/ElderCardDisplay';
 import { ElderCards } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
+import { getQuerySearchAsStringValue } from '../utils/queryAsString';
 
 interface Props {
-    // initialQuery?: ParsedUrlQuery;
-    // json?: object;
-    // cards?: ElderCards;
+    cards?: ElderCards;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -95,25 +93,23 @@ const makeQueryUrl = (
 }
 
 
-const PhotoGrid: NextPage<Props> = (_props) => {
+const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
-
-    let initialSearch = '';
-    if (router.query.search && typeof router.query.search === 'string') {
-        initialSearch = router.query.search as string;
-    }
+    const initialSearch = getQuerySearchAsStringValue(router.query);
+    const isServerSearched = useRef(props.cards && props.cards.cards.length > 0);
     const [loading, setLoading] = useState(false);
     const [contents, setContents] = useState<React.ReactNode>(null);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
 
-    // const [open, setOpen] = useState(false);
-    // const handleClose = () => {
-    //     setOpen(false);
-    // };
-
     useEffect(() => {
+        if(isServerSearched.current) {
+            isServerSearched.current = false;
+            setContents(generateGridItems(props.cards));
+            return;
+        }
+        console.log('FIRING')
         setLoading(true);
         axios.get<ElderCards>(API, {
             params: {
@@ -122,29 +118,18 @@ const PhotoGrid: NextPage<Props> = (_props) => {
             }
         }).then(response => {
             setLoading(false);
-            console.log(`using the search term: ${JSON.stringify(response.data)}`);
             setContents(generateGridItems(response.data));
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
     console.log(`Current loading is ${loading}`);
 
-    // if (!contents && !loading) {
-    //     console.log('using the baked in version');
-    //     setContents(generateGridItems(props.cards));
-    // }
-
     useEffect(() => {
         const { page } = router.query;
         const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
         console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
         router.push(queryUrl, undefined, { shallow: true })
-        // router.push()
     }, [debouncedSearchTerm])
-
-    console.log(`Router Query ${JSON.stringify(router.query)}`);
-    console.log(`Router pathname ${JSON.stringify(router.pathname)}`);
-    // console.log(`Page context query ${JSON.stringify(props.initialQuery)}`);
 
     return (
         <Container maxWidth="md" className={classes.root}>
@@ -168,22 +153,22 @@ const PhotoGrid: NextPage<Props> = (_props) => {
     );
 }
 
-// PhotoGrid.getInitialProps = async (ctx) => {
-//     const response = await axios.get<ElderCards>(API, {
-//         params: {
-//             pageSize: 20,
-//         }
-//     });
+PhotoGrid.getInitialProps = async (ctx) => {
+    const search = getQuerySearchAsStringValue(ctx.query);
+    const response = await axios.get<ElderCards>(API, {
+        params: {
+            pageSize: 20,
+            name: search,
+        }
+    });
 
-//     let cards;
-//     if (response.status === 200) {
-//         cards = response.data;
-//     }
-//     return {
-//         initialQuery: ctx.query,
-//         json: response.data,
-//         cards,
-//     }
-// }
+    let cards;
+    if (response.status === 200) {
+        cards = response.data;
+    }
+    return {
+        cards,
+    }
+}
 
 export default PhotoGrid;
