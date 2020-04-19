@@ -140,7 +140,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     }, [debouncedSearchTerm])
 
     return (
-        <Container maxWidth="md" className={classes.root}>
+        <Container maxWidth="md" className={classes.root} id="scrollingContainer">
             <TextField
                 label="Card Name"
                 id="standard-start-adornment"
