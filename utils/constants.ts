@@ -1,0 +1,1 @@
+export const API = 'https://api.elderscrollslegends.io/v1/cards';
