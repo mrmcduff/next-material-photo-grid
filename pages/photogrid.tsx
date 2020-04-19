@@ -104,20 +104,22 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
 
     useEffect(() => {
-        if(isServerSearched.current) {
+        if (isServerSearched.current) {
             isServerSearched.current = false;
             setContents(generateGridItems(props.cards));
             return;
         }
         console.log('FIRING')
         setLoading(true);
-        axios.get<{ cards: ElderCard[] }>(API, {
+        axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
             params: {
                 pageSize: 20,
                 name: debouncedSearchTerm,
             }
         }).then(response => {
             setLoading(false);
+            console.log(response.data);
+            console.log(response.data._totalCount);
             setContents(generateGridItems(response.data.cards));
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
@@ -155,7 +157,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
 PhotoGrid.getInitialProps = async (ctx) => {
     const search = getQuerySearchAsStringValue(ctx.query);
-    const response = await axios.get<{ cards: ElderCard []}>(API, {
+    const response = await axios.get<{ cards: ElderCard[] }>(API, {
         params: {
             pageSize: 20,
             name: search,
