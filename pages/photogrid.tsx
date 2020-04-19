@@ -12,13 +12,13 @@ import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import SearchIcon from '@material-ui/icons/Search';
 import ElderCardDisplay from '../components/ElderCardDisplay';
-import { ElderCards } from '../interfaces/elderCard';
+import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
 import { getQuerySearchAsStringValue } from '../utils/queryAsString';
 
 interface Props {
-    cards?: ElderCards;
+    cards?: ElderCard[];
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -48,9 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-const generateGridItems = (cards?: ElderCards): React.ReactNode => {
-    if (cards && cards.cards.length > 0) {
-        return cards.cards.map((card, index) => {
+const generateGridItems = (cards?: ElderCard[]): React.ReactNode => {
+    if (cards && cards.length > 0) {
+        return cards.map((card, index) => {
             return generateGridItem({
                 name: card.name,
                 setName: card.set.name,
@@ -97,7 +97,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
     const initialSearch = getQuerySearchAsStringValue(router.query);
-    const isServerSearched = useRef(props.cards && props.cards.cards.length > 0);
+    const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
     const [contents, setContents] = useState<React.ReactNode>(null);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -111,14 +111,14 @@ const PhotoGrid: NextPage<Props> = (props) => {
         }
         console.log('FIRING')
         setLoading(true);
-        axios.get<ElderCards>(API, {
+        axios.get<{ cards: ElderCard[] }>(API, {
             params: {
                 pageSize: 20,
                 name: debouncedSearchTerm,
             }
         }).then(response => {
             setLoading(false);
-            setContents(generateGridItems(response.data));
+            setContents(generateGridItems(response.data.cards));
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
@@ -155,7 +155,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
 PhotoGrid.getInitialProps = async (ctx) => {
     const search = getQuerySearchAsStringValue(ctx.query);
-    const response = await axios.get<ElderCards>(API, {
+    const response = await axios.get<{ cards: ElderCard []}>(API, {
         params: {
             pageSize: 20,
             name: search,
@@ -164,7 +164,7 @@ PhotoGrid.getInitialProps = async (ctx) => {
 
     let cards;
     if (response.status === 200) {
-        cards = response.data;
+        cards = response.data.cards;
     }
     return {
         cards,
