@@ -89,7 +89,7 @@ const generateGridItem = ({ name, setName, text, type, imageUrl, index }: {
 
 const makeQueryUrl = (
     pathName: string,
-    page?: string | string[],
+    page?: number,
     search?: string | string[]): string => {
     const pageTerm = page ? `?page=${page}` : '';
     const searchTerm = search ? `${pageTerm ? '&' : '?'}search=${search}` : '';
