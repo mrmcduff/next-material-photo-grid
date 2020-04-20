@@ -137,7 +137,6 @@ const PhotoGrid: NextPage<Props> = (props) => {
     console.log(`Current loading is ${loading}`);
 
     useEffect(() => {
-        const { page } = router.query;
         const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
         console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
         router.push(queryUrl, undefined, { shallow: true })
