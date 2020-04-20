@@ -100,12 +100,15 @@ const makeQueryUrl = (
 const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
-    const initialSearch = getQueryParameters(router.query);
+
+    const queryParams = getQueryParameters(router.query);
+
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState(initialSearch);
-    const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
-    const [ state, dispatch ] = useReducer(cardReducer, generateInitialState());
+    const [searchTerm, setSearchTerm] = useState(queryParams.search);
+    const [page, setPage] = useState(queryParams.page);
+    const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
+    const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
     useEffect(() => {
         if (isServerSearched.current) {
