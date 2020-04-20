@@ -4,7 +4,6 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import Typography from '@material-ui/core/Typography';
-// import { blueGrey } from '@material-ui/core/colors';
 
 interface Props {
     imageUrl?: string;
@@ -25,8 +24,6 @@ const useStyles = makeStyles({
         padding: 8,
         minWidth: 256,
         objectFit: "contain"
-        // backgroundColor: blueGrey[100],
-        // paddingTop: '56.25%', // 16:9
     },
     title: {
         fontSize: 14,
