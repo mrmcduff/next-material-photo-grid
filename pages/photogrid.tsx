@@ -119,6 +119,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
             return;
         }
         dispatch({ type: 'clear' });
+        setPage(undefined);
         setLoading(true);
         axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
             params: {
@@ -165,11 +166,12 @@ const PhotoGrid: NextPage<Props> = (props) => {
 }
 
 PhotoGrid.getInitialProps = async (ctx) => {
-    const search = getQueryParameters(ctx.query);
+    const queryParams = getQueryParameters(ctx.query);
     const response = await axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
         params: {
             pageSize: 20,
-            name: search,
+            name: queryParams.search,
+            page: queryParams.page,
         }
     });
 
