@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useReducer } from 'react';
-import axios from 'axios';
 import clsx from 'clsx';
 import { useRouter } from 'next/router';
 import { NextPage } from 'next';
@@ -14,12 +13,12 @@ import SearchIcon from '@material-ui/icons/Search';
 import ElderCardDisplay from '../components/ElderCardDisplay';
 import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { API } from '../utils/constants';
 import { getQueryParameters } from '../utils/queryAsString';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { makeQueryUrl } from '../utils/makeQueryUrl';
+import { getCards } from '../utils/apiGet';
 
 interface Props {
     cards?: ElderCard[];
@@ -119,12 +118,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
         }
         dispatch({ type: 'clear' });
         setLoading(true);
-        axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
-            params: {
-                pageSize: 20,
-                name: debouncedSearchTerm,
-            }
-        }).then(response => {
+        getCards(debouncedSearchTerm, undefined).then(response => {
             setLoading(false);
             setPage(undefined);
             console.log(response.data);
@@ -165,13 +159,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
 PhotoGrid.getInitialProps = async (ctx) => {
     const queryParams = getQueryParameters(ctx.query);
-    const response = await axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
-        params: {
-            pageSize: 20,
-            name: queryParams.search,
-            page: queryParams.page,
-        }
-    });
+    const response = await getCards(queryParams.search, queryParams.page);
 
     let cards;
     let totalCount = 0;
