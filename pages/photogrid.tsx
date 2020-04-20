@@ -15,7 +15,7 @@ import ElderCardDisplay from '../components/ElderCardDisplay';
 import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
-import { getQuerySearchAsStringValue } from '../utils/queryAsString';
+import { getQueryParameters } from '../utils/queryAsString';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
 
 interface Props {
@@ -100,7 +100,7 @@ const makeQueryUrl = (
 const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
-    const initialSearch = getQuerySearchAsStringValue(router.query);
+    const initialSearch = getQueryParameters(router.query);
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -162,7 +162,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 }
 
 PhotoGrid.getInitialProps = async (ctx) => {
-    const search = getQuerySearchAsStringValue(ctx.query);
+    const search = getQueryParameters(ctx.query);
     const response = await axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
         params: {
             pageSize: 20,
