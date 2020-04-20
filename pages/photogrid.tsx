@@ -15,8 +15,10 @@ import ElderCardDisplay from '../components/ElderCardDisplay';
 import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
-import { getQuerySearchAsStringValue } from '../utils/queryAsString';
+import { getQueryParameters } from '../utils/queryAsString';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
+import InfiniteScroll from "react-infinite-scroll-component";
+// import { Typography } from '@material-ui/core';
 
 interface Props {
     cards?: ElderCard[];
@@ -89,7 +91,7 @@ const generateGridItem = ({ name, setName, text, type, imageUrl, index }: {
 
 const makeQueryUrl = (
     pathName: string,
-    page?: string | string[],
+    page?: number,
     search?: string | string[]): string => {
     const pageTerm = page ? `?page=${page}` : '';
     const searchTerm = search ? `${pageTerm ? '&' : '?'}search=${search}` : '';
@@ -100,12 +102,15 @@ const makeQueryUrl = (
 const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
-    const initialSearch = getQuerySearchAsStringValue(router.query);
+
+    const queryParams = getQueryParameters(router.query);
+
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState(initialSearch);
-    const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
-    const [ state, dispatch ] = useReducer(cardReducer, generateInitialState());
+    const [searchTerm, setSearchTerm] = useState(queryParams.search);
+    const [page, setPage] = useState(queryParams.page);
+    const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
+    const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
     useEffect(() => {
         if (isServerSearched.current) {
@@ -116,11 +121,13 @@ const PhotoGrid: NextPage<Props> = (props) => {
             return;
         }
         dispatch({ type: 'clear' });
+        setPage(undefined);
         setLoading(true);
         axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
             params: {
                 pageSize: 20,
                 name: debouncedSearchTerm,
+                page: page,
             }
         }).then(response => {
             setLoading(false);
@@ -133,40 +140,61 @@ const PhotoGrid: NextPage<Props> = (props) => {
     console.log(`Current loading is ${loading}`);
 
     useEffect(() => {
-        const { page } = router.query;
         const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
-        console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
         router.push(queryUrl, undefined, { shallow: true })
-    }, [debouncedSearchTerm])
+    }, [page, debouncedSearchTerm])
+
+    const fetchMoreData = async () => {
+        const usedPage = page ? page + 1 : 2;
+        axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
+            params: {
+                pageSize: 20,
+                name: debouncedSearchTerm,
+                page: usedPage,
+            }
+        }).then(response => {
+            dispatch({ type: 'append', payload: { cards: response.data.cards, totalCount: response.data._totalCount } });
+        });
+    }
 
     return (
         <Container maxWidth="md" className={classes.root} id="scrollingContainer">
-            <TextField
-                label="Card Name"
-                id="standard-start-adornment"
-                className={clsx(classes.margin, classes.textField)}
-                InputProps={{
-                    endAdornment: <InputAdornment position="end"><SearchIcon /></InputAdornment>,
-                }}
-                value={searchTerm}
-                onChange={(event) => { setSearchTerm(event.target.value) }}
-            />
-            <Backdrop className={classes.backdrop} open={loading}>
-                <CircularProgress color="inherit" />
-            </Backdrop>
-            <Grid container spacing={3}>
-                {generateGridItems(state.cards)}
-            </Grid>
+            <InfiniteScroll
+                dataLength={state.cards.length}
+                next={fetchMoreData}
+                hasMore={state.currentCount < state.totalCount}
+                loader={<CircularProgress color="primary" />}
+                scrollableTarget="scrollingContainer"
+            >
+                <TextField
+                    label="Card Name"
+                    id="standard-start-adornment"
+                    className={clsx(classes.margin, classes.textField)}
+                    InputProps={{
+                        endAdornment: <InputAdornment position="end"><SearchIcon /></InputAdornment>,
+                    }}
+                    value={searchTerm}
+                    onChange={(event) => { setSearchTerm(event.target.value) }}
+                />
+                <Backdrop className={classes.backdrop} open={loading}>
+                    <CircularProgress color="inherit" />
+                </Backdrop>
+
+                <Grid container spacing={3}>
+                    {generateGridItems(state.cards)}
+                </Grid>
+            </InfiniteScroll>
         </Container>
     );
 }
 
 PhotoGrid.getInitialProps = async (ctx) => {
-    const search = getQuerySearchAsStringValue(ctx.query);
+    const queryParams = getQueryParameters(ctx.query);
     const response = await axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
         params: {
             pageSize: 20,
-            name: search,
+            name: queryParams.search,
+            page: queryParams.page,
         }
     });
 
