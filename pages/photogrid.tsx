@@ -118,7 +118,6 @@ const PhotoGrid: NextPage<Props> = (props) => {
             return;
         }
         dispatch({ type: 'clear' });
-        setPage(undefined);
         setLoading(true);
         axios.get<{ cards: ElderCard[], _totalCount: number }>(API, {
             params: {
@@ -127,6 +126,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
             }
         }).then(response => {
             setLoading(false);
+            setPage(undefined);
             console.log(response.data);
             console.log(response.data._totalCount);
             dispatch({ type: 'append', payload: { cards: response.data.cards, totalCount: response.data._totalCount } })
@@ -139,7 +139,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
         const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
         console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
         router.push(queryUrl, undefined, { shallow: true })
-    }, [debouncedSearchTerm])
+    }, [page, debouncedSearchTerm])
 
     return (
         <Container maxWidth="md" className={classes.root} id="scrollingContainer">
