@@ -17,6 +17,9 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { API } from '../utils/constants';
 import { getQueryParameters } from '../utils/queryAsString';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
+import { useTheme } from '@material-ui/core/styles';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
+import { makeQueryUrl } from '../utils/makeQueryUrl';
 
 interface Props {
     cards?: ElderCard[];
@@ -87,16 +90,6 @@ const generateGridItem = ({ name, setName, text, type, imageUrl, index }: {
     );
 }
 
-const makeQueryUrl = (
-    pathName: string,
-    page?: number,
-    search?: string | string[]): string => {
-    const pageTerm = page ? `?page=${page}` : '';
-    const searchTerm = search ? `${pageTerm ? '&' : '?'}search=${search}` : '';
-    return `${pathName}${pageTerm}${searchTerm}`;
-}
-
-
 const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
@@ -109,6 +102,12 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const [page, setPage] = useState(queryParams.page);
     const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
+
+    const theme = useTheme();
+    const xs = useMediaQuery(theme.breakpoints.up('xs'));
+    const sm = useMediaQuery(theme.breakpoints.up('sm'));
+    const md = useMediaQuery(theme.breakpoints.up('md'));
+    console.log(`Media matches answer:\nxs: ${xs}\nsm: ${sm}\nmd: ${md}`);
 
     useEffect(() => {
         if (isServerSearched.current) {
