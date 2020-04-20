@@ -29,14 +29,14 @@ const MyApp: NextComponentType<AppContext, AppInitialProps, AppProps> = ({ Compo
     );
 }
 
-MyApp.getInitialProps = async ({ Component, ctx }: AppContext): Promise<AppInitialProps> => {
-    let pageProps = {};
+// MyApp.getInitialProps = async ({ Component, ctx }: AppContext): Promise<AppInitialProps> => {
+//     let pageProps = {};
 
-    if (Component.getInitialProps) {
-        pageProps = await Component.getInitialProps(ctx);
-    }
+//     if (Component.getInitialProps) {
+//         pageProps = await Component.getInitialProps(ctx);
+//     }
 
-    return { pageProps };
-}
+//     return { pageProps };
+// }
 
 export default MyApp;
