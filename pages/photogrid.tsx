@@ -13,7 +13,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import ElderCardDisplay from '../components/ElderCardDisplay';
 import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { getQueryParameters } from '../utils/queryAsString';
+import { getQueryParameters } from '../utils/getQueryParameters';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
 import { makeQueryUrl } from '../utils/makeQueryUrl';
 import { getCards } from '../utils/apiGet';
@@ -97,7 +97,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState(queryParams.search);
-    const [page, setPage] = useState(queryParams.page);
+    const [page, setPage] = useState<number | undefined>(undefined);
     const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
@@ -120,8 +120,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
     // This handles altering the query terms
     useEffect(() => {
-        const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
-        console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
+        const queryUrl = makeQueryUrl(router.pathname, debouncedSearchTerm);
         router.push(queryUrl, undefined, { shallow: true })
     }, [page, debouncedSearchTerm])
 
@@ -169,7 +168,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
 PhotoGrid.getInitialProps = async (ctx) => {
     const queryParams = getQueryParameters(ctx.query);
-    const response = await getCards(queryParams.search, queryParams.page);
+    const response = await getCards(queryParams.search);
 
     let cards;
     let totalCount = 0;

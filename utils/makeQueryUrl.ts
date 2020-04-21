@@ -1,5 +1,4 @@
-export function makeQueryUrl (pathName: string, page?: number, search?: string | string[]): string {
-    const pageTerm = page ? `?page=${page}` : '';
-    const searchTerm = search ? `${pageTerm ? '&' : '?'}search=${search}` : '';
-    return `${pathName}${pageTerm}${searchTerm}`;
+export function makeQueryUrl (pathName: string, search?: string | string[]): string {
+    const searchTerm = search ? `?search=${search}` : '';
+    return `${pathName}${searchTerm}`;
 }
