@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Debounces changes to a value using the given delay. Useful, for instance
- * with API calls made by a search/autocomplete input.
+ * Debounces changes to a value using the given delay.
+ * Useful with API calls made by a search/autocomplete input.
  */
 export function useDebouncedValue<T>(value: T, delay: number) {
     const [debouncedValue, setDebouncedValue] = useState(value);
