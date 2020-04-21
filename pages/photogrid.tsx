@@ -96,9 +96,13 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState(queryParams.search);
+    const [searchTerm, setSearchTerm] = useState(queryParams.search || '');
+
+    console.log(`Searchterm is ${searchTerm}`);
     const [page, setPage] = useState<number | undefined>(undefined);
-    const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
+    const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
+    console.log(`debounced searchterm is ${debouncedSearchTerm}`);
+
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
     useEffect(() => {
@@ -122,7 +126,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     useEffect(() => {
         const queryUrl = makeQueryUrl(router.pathname, debouncedSearchTerm);
         router.push(queryUrl, undefined, { shallow: true })
-    }, [page, debouncedSearchTerm])
+    }, [debouncedSearchTerm])
 
     const handleLoadMore = () => {
         setLoading(true);
@@ -153,7 +157,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 InputProps={{
                     endAdornment: <InputAdornment position="end"><SearchIcon /></InputAdornment>,
                 }}
-                value={searchTerm}
+                value={searchTerm || ''}
                 onChange={(event) => { setSearchTerm(event.target.value) }}
             />
             <Backdrop className={classes.backdrop} open={loading}>
