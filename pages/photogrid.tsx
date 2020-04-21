@@ -19,6 +19,7 @@ import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { makeQueryUrl } from '../utils/makeQueryUrl';
 import { getCards } from '../utils/apiGet';
+import { useInfiniteScroll } from 'react-infinite-scroll-hook';
 
 interface Props {
     cards?: ElderCard[];
@@ -127,6 +128,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
+
     console.log(`Current loading is ${loading}`);
 
     useEffect(() => {
@@ -135,8 +137,34 @@ const PhotoGrid: NextPage<Props> = (props) => {
         router.push(queryUrl, undefined, { shallow: true })
     }, [page, debouncedSearchTerm])
 
+    // const startLoadingDelay = async () => {
+    //     setLoading(true);
+    //     setTimeout(() => setLoading(false), 2000);
+    // }
+
+    const handleLoadMore = () => {
+        setLoading(true);
+        // startLoadingDelay();
+        const nextPage = page ? page + 1 : 2;
+        console.log(`About to call for page ${nextPage}`);
+        getCards(debouncedSearchTerm, nextPage).then(
+            response => {
+                setLoading(false);
+                setPage(nextPage);
+                dispatch({ type: 'append', payload: { cards: response.data.cards, totalCount: response.data._totalCount } })
+            }
+        );
+    }
+
+    const infiniteScrollRef = useInfiniteScroll<HTMLDivElement>({
+        loading,
+        hasNextPage: state.currentCount < state.totalCount,
+        onLoadMore: handleLoadMore,
+        scrollContainer: 'window'
+    });
+
     return (
-        <Container maxWidth="md" className={classes.root} id="scrollingContainer">
+        <Container maxWidth="md" className={classes.root} id="scrollingContainer" >
             <TextField
                 label="Card Name"
                 id="standard-start-adornment"
@@ -150,7 +178,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
             <Backdrop className={classes.backdrop} open={loading}>
                 <CircularProgress color="inherit" />
             </Backdrop>
-            <Grid container spacing={3}>
+            <Grid container spacing={3} ref={infiniteScrollRef}>
                 {generateGridItems(state.cards)}
             </Grid>
         </Container>
