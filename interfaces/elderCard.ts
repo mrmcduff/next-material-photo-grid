@@ -1,9 +1,5 @@
 import { ElderCardSet } from './elderCardSet';
 
-export interface ElderCards {
-    cards: ElderCard[];
-}
-
 export interface ElderCard {
     name: string;
     rarity: string;

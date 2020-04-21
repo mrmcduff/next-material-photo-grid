@@ -15,8 +15,6 @@ import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { getQueryParameters } from '../utils/queryAsString';
 import cardReducer, { generateInitialState } from '../utils/cardReducer';
-import { useTheme } from '@material-ui/core/styles';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { makeQueryUrl } from '../utils/makeQueryUrl';
 import { getCards } from '../utils/apiGet';
 import { useInfiniteScroll } from 'react-infinite-scroll-hook';
@@ -103,12 +101,6 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const debouncedSearchTerm = useDebouncedValue<string | undefined>(searchTerm, 1000);
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
-    const theme = useTheme();
-    const xs = useMediaQuery(theme.breakpoints.up('xs'));
-    const sm = useMediaQuery(theme.breakpoints.up('sm'));
-    const md = useMediaQuery(theme.breakpoints.up('md'));
-    console.log(`Media matches answer:\nxs: ${xs}\nsm: ${sm}\nmd: ${md}`);
-
     useEffect(() => {
         if (isServerSearched.current) {
             isServerSearched.current = false;
@@ -122,31 +114,20 @@ const PhotoGrid: NextPage<Props> = (props) => {
         getCards(debouncedSearchTerm, undefined).then(response => {
             setLoading(false);
             setPage(undefined);
-            console.log(response.data);
-            console.log(response.data._totalCount);
             dispatch({ type: 'append', payload: { cards: response.data.cards, totalCount: response.data._totalCount } })
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
-
-    console.log(`Current loading is ${loading}`);
-
+    // This handles altering the query terms
     useEffect(() => {
         const queryUrl = makeQueryUrl(router.pathname, page, debouncedSearchTerm);
         console.log(makeQueryUrl(router.pathname, page, debouncedSearchTerm));
         router.push(queryUrl, undefined, { shallow: true })
     }, [page, debouncedSearchTerm])
 
-    // const startLoadingDelay = async () => {
-    //     setLoading(true);
-    //     setTimeout(() => setLoading(false), 2000);
-    // }
-
     const handleLoadMore = () => {
         setLoading(true);
-        // startLoadingDelay();
         const nextPage = page ? page + 1 : 2;
-        console.log(`About to call for page ${nextPage}`);
         getCards(debouncedSearchTerm, nextPage).then(
             response => {
                 setLoading(false);
@@ -156,6 +137,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
         );
     }
 
+    // All the magic of infinite scroll is handled with this hook.
     const infiniteScrollRef = useInfiniteScroll<HTMLDivElement>({
         loading,
         hasNextPage: state.currentCount < state.totalCount,
