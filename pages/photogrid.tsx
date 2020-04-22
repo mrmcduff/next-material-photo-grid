@@ -80,11 +80,12 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
     // Don't flicker the empty item on first render for slow connections.
-    const isFirstRun = useRef(true);
+    const [isFirstRun, setIsFirstRun] = useState(true);
     useEffect(() => {
-        if (isFirstRun.current) {
+        if (isFirstRun) {
             setTimeout(() => {
-                isFirstRun.current = false;
+                // This will cause another render, which is intended.
+                setIsFirstRun(false);
             }, 1000);
         }
     },[]);
@@ -136,7 +137,6 @@ const PhotoGrid: NextPage<Props> = (props) => {
         onLoadMore: handleLoadMore,
         scrollContainer: 'window'
     });
-
     return (
         <Container maxWidth="md" className={classes.root} id="scrollingContainer" >
             <Link href="/">
@@ -159,7 +159,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <Grid container spacing={3} ref={infiniteScrollRef}>
-                {generateGridItems(!isFirstRun.current && loading, state.cards)}
+                {generateGridItems(isFirstRun || loading, state.cards)}
             </Grid>
         </Container>
     );
