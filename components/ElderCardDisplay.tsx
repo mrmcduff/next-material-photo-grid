@@ -17,6 +17,7 @@ const useStyles = makeStyles({
     root: {
         minHeight: 64,
         minWidth: 64,
+        height: "100%",
     },
     media: {
         borderRadius: 24,

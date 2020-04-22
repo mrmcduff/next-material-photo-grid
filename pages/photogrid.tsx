@@ -1,23 +1,34 @@
+/** React and Next JS imports */
 import React, { useState, useEffect, useRef, useReducer } from 'react';
 import clsx from 'clsx';
 import { useRouter } from 'next/router';
 import { NextPage } from 'next';
+
+/** Material UI imports */
 import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import Backdrop from '@material-ui/core/Backdrop'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import Backdrop from '@material-ui/core/Backdrop';
+import Box from '@material-ui/core/Box';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
-import TextField from '@material-ui/core/TextField';
+import Grid from '@material-ui/core/Grid';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
 import SearchIcon from '@material-ui/icons/Search';
-import ElderCardDisplay from '../components/ElderCardDisplay';
+
+/** Other third-party imports */
+import { useInfiniteScroll } from 'react-infinite-scroll-hook';
+
+/** Local imports */
+import cardReducer, { generateInitialState } from '../utils/cardReducer';
 import { ElderCard } from '../interfaces/elderCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { getQueryParameters } from '../utils/getQueryParameters';
-import cardReducer, { generateInitialState } from '../utils/cardReducer';
-import { makeQueryUrl } from '../utils/makeQueryUrl';
+import { generateGridItems } from '../src/generateGridItems';
 import { getCards } from '../utils/apiGet';
-import { useInfiniteScroll } from 'react-infinite-scroll-hook';
+import { getQueryParameters } from '../utils/getQueryParameters';
+import Link from '../components/Link';
+import { makeQueryUrl } from '../utils/makeQueryUrl';
 
 interface Props {
     cards?: ElderCard[];
@@ -51,61 +62,23 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-const generateGridItems = (cards?: ElderCard[]): React.ReactNode => {
-    if (cards && cards.length > 0) {
-        return cards.map((card, index) => {
-            return generateGridItem({
-                name: card.name,
-                setName: card.set.name,
-                text: card.text,
-                type: card.type,
-                imageUrl: card.imageUrl,
-                index
-            });
-        });
-    } else {
-        return null;
-    }
-}
-
-const generateGridItem = ({ name, setName, text, type, imageUrl, index }: {
-    name: string;
-    imageUrl: string;
-    setName: string;
-    text: string;
-    type: string;
-    index: number;
-}) => {
-    return (
-        <Grid item xs={12} sm={6} md={4} key={index}>
-            <ElderCardDisplay
-                name={name}
-                setName={setName}
-                imageUrl={imageUrl}
-                text={text}
-                type={type} />
-        </Grid>
-    );
-}
-
 const PhotoGrid: NextPage<Props> = (props) => {
     const router = useRouter();
     const classes = useStyles();
-
     const queryParams = getQueryParameters(router.query);
-
+    // Checking to see if we've loaded server-side first to reduce calls to the API
     const isServerSearched = useRef(props.cards && props.cards.length > 0);
     const [loading, setLoading] = useState(false);
+    // This is the raw, un-debounced search term as the user types.
     const [searchTerm, setSearchTerm] = useState(queryParams.search || '');
-
-    console.log(`Searchterm is ${searchTerm}`);
     const [page, setPage] = useState<number | undefined>(undefined);
     const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
-    console.log(`debounced searchterm is ${debouncedSearchTerm}`);
 
+    // This contains all of our stored and displayed (or scrolled off) card data
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
 
     useEffect(() => {
+        // The "changed" search term is the same as what was already searched for on the server side.
         if (isServerSearched.current) {
             isServerSearched.current = false;
             if (props.cards) {
@@ -113,6 +86,9 @@ const PhotoGrid: NextPage<Props> = (props) => {
             }
             return;
         }
+
+        // This resulted from a client-side change of the search bar, so we are doing a
+        // new search and need to clear our old storage.
         dispatch({ type: 'clear' });
         setLoading(true);
         getCards(debouncedSearchTerm, undefined).then(response => {
@@ -122,12 +98,13 @@ const PhotoGrid: NextPage<Props> = (props) => {
         }, error => { console.log(error) });
     }, [debouncedSearchTerm]);
 
-    // This handles altering the query terms
+    // This handles altering the query terms so that search results can be easily shared.
     useEffect(() => {
         const queryUrl = makeQueryUrl(router.pathname, debouncedSearchTerm);
         router.push(queryUrl, undefined, { shallow: true })
     }, [debouncedSearchTerm])
 
+    // Handler specifically for "load the next page of whatever we're currenly searching for."
     const handleLoadMore = () => {
         setLoading(true);
         const nextPage = page ? page + 1 : 2;
@@ -150,12 +127,18 @@ const PhotoGrid: NextPage<Props> = (props) => {
 
     return (
         <Container maxWidth="md" className={classes.root} id="scrollingContainer" >
+            <Link href="/">
+                <Box component="div" display="flex" flexDirection="row" alignItems="center" >
+                    <ArrowBackIcon />
+                    <Typography variant="body2">Main Page</Typography>
+                </Box>
+            </Link>
             <TextField
                 label="Card Name"
                 id="standard-start-adornment"
                 className={clsx(classes.margin, classes.textField)}
                 InputProps={{
-                    endAdornment: <InputAdornment position="end"><SearchIcon /></InputAdornment>,
+                    endAdornment: <InputAdornment position="end"><SearchIcon color="inherit" /></InputAdornment>,
                 }}
                 value={searchTerm || ''}
                 onChange={(event) => { setSearchTerm(event.target.value) }}
@@ -170,6 +153,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
     );
 }
 
+// Make a call on the server side the first time that the page is loaded to reduce time to first render
 PhotoGrid.getInitialProps = async (ctx) => {
     const queryParams = getQueryParameters(ctx.query);
     const response = await getCards(queryParams.search);
