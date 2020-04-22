@@ -147,7 +147,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <Grid container spacing={3} ref={infiniteScrollRef}>
-                {generateGridItems(state.cards)}
+                {generateGridItems(loading, state.cards)}
             </Grid>
         </Container>
     );
