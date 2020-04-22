@@ -71,11 +71,24 @@ const PhotoGrid: NextPage<Props> = (props) => {
     const [loading, setLoading] = useState(false);
     // This is the raw, un-debounced search term as the user types.
     const [searchTerm, setSearchTerm] = useState(queryParams.search || '');
-    const [page, setPage] = useState<number | undefined>(undefined);
     const debouncedSearchTerm = useDebouncedValue<string>(searchTerm, 1000);
+
+    // Keeps track of our current page in the 20-sized calls we make to the api
+    const [page, setPage] = useState<number | undefined>(undefined);
 
     // This contains all of our stored and displayed (or scrolled off) card data
     const [state, dispatch] = useReducer(cardReducer, generateInitialState());
+
+    // Don't flicker the empty item on first render for slow connections.
+    const isFirstRun = useRef(true);
+    useEffect(() => {
+        if (isFirstRun.current) {
+            setTimeout(() => {
+                isFirstRun.current = false;
+            }, 500);
+            return;
+        }
+    },[]);
 
     useEffect(() => {
         // The "changed" search term is the same as what was already searched for on the server side.
@@ -147,7 +160,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <Grid container spacing={3} ref={infiniteScrollRef}>
-                {generateGridItems(loading, state.cards)}
+                {generateGridItems(!(isFirstRun.current && !debouncedSearchTerm) || loading, state.cards)}
             </Grid>
         </Container>
     );
