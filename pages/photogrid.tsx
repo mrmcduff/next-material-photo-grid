@@ -85,8 +85,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
         if (isFirstRun.current) {
             setTimeout(() => {
                 isFirstRun.current = false;
-            }, 500);
-            return;
+            }, 1000);
         }
     },[]);
 
@@ -160,7 +159,7 @@ const PhotoGrid: NextPage<Props> = (props) => {
                 <CircularProgress color="inherit" />
             </Backdrop>
             <Grid container spacing={3} ref={infiniteScrollRef}>
-                {generateGridItems(!(isFirstRun.current && !debouncedSearchTerm) || loading, state.cards)}
+                {generateGridItems(!isFirstRun.current && loading, state.cards)}
             </Grid>
         </Container>
     );
