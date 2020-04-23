@@ -26,4 +26,4 @@ You can run these with npm if you'd like - the only difference is that you'll ge
 
 ## Deploy your own github project
 
-Want to deploy your own repo with Vercel/ZEIT? It's easy: [Vercel Now](https://vercel.com/home):
+Want to deploy your own repo with Vercel/ZEIT? It's easy: [Vercel Now](https://vercel.com/home)
